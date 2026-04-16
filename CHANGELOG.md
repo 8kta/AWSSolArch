@@ -6,6 +6,7 @@
         - Goups
         - Policies
         - Users
-
+        - .gitignore updated to remove all terraform
+        - Run successfully in aws
 
 
