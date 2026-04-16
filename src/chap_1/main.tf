@@ -67,8 +67,8 @@ module "lambda_execution_policy" {
 module "developers_group" {
   source = "../modules/iam_groups"
 
-  group_name  = "${local.project}-developers-${var.stage}"
-  path        = "/${local.project}-teams/"
+  group_name = "${local.project}-developers-${var.stage}"
+  path       = "/${local.project}-teams/"
   policy_arns = [
     module.s3_read_policy.policy_arn
   ]
@@ -78,8 +78,8 @@ module "developers_group" {
 module "administrators_group" {
   source = "../modules/iam_groups"
 
-  group_name  = "${local.project}-administrators-${var.stage}"
-  path        = "/${local.project}-teams/"
+  group_name = "${local.project}-administrators-${var.stage}"
+  path       = "/${local.project}-teams/"
   policy_arns = [
     "arn:aws:iam::aws:policy/AdministratorAccess"
   ]
