@@ -117,3 +117,60 @@ module "admin_user" {
     Role        = "Administrator"
   }
 }
+
+module "secure_bucket_read_policy" {
+  source = "../modules/iam_policies"
+
+  policy_name = "${local.project}-secure-bucket-read-${var.stage}"
+  path        = "/${local.project}_policies/"
+  description = "Policy for read-only access to secure S3 bucket"
+  policy_document = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          "arn:aws:s3:::${local.env[var.stage].s3_secure_data_bucket}",
+          "arn:aws:s3:::${local.env[var.stage].s3_secure_data_bucket}/*"
+        ]
+      }
+    ]
+  })
+  tags = {
+    Environment = var.stage
+    Project     = local.project
+  }
+}
+
+module "ec2_secure_bucket_role" {
+  source = "../modules/iam_roles"
+
+  role_name   = "${local.project}-ec2-secure-bucket-${var.stage}"
+  path        = "/${local.project}-roles/"
+  description = "Role for EC2 instances to read from secure bucket"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+  policy_arns = [
+    module.secure_bucket_read_policy.policy_arn
+  ]
+  create_instance_profile = true
+  tags = {
+    Environment = var.stage
+    Project     = local.project
+    Purpose     = "EC2 Secure Bucket Read Access"
+  }
+}
