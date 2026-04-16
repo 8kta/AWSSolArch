@@ -86,6 +86,34 @@ module "administrators_group" {
   users = []
 }
 
+module "deny_iam_privilege_escalation_policy" {
+  source = "../modules/iam_policies"
+
+  policy_name = "${local.project}-deny-iam-escalation-${var.stage}"
+  path        = "/${local.project}_policies/"
+  description = "Deny IAM privilege escalation actions"
+  policy_document = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Deny"
+        Action = [
+          "iam:PassRole",
+          "iam:CreateRole",
+          "iam:AttachRolePolicy",
+          "iam:PutRolePolicy",
+          "iam:UpdateAssumeRolePolicy"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+  tags = {
+    Environment = var.stage
+    Project     = local.project
+  }
+}
+
 module "developer_user" {
   source = "../modules/iam_users"
 
@@ -93,8 +121,8 @@ module "developer_user" {
   path              = "/${local.project}-users/"
   create_access_key = true
   policy_arns = [
-    module.s3_read_policy.policy_arn,
-    module.deny_terraform_apply_policy.policy_arn
+    "arn:aws:iam::aws:policy/ReadOnlyAccess",
+    module.deny_iam_privilege_escalation_policy.policy_arn
   ]
   tags = {
     Environment = var.stage
@@ -110,47 +138,12 @@ module "admin_user" {
   path              = "/${local.project}-users/"
   create_access_key = true
   policy_arns = [
-    "arn:aws:iam::aws:policy/AdministratorAccess",
-    module.deny_terraform_apply_policy.policy_arn
+    "arn:aws:iam::aws:policy/AdministratorAccess"
   ]
   tags = {
     Environment = var.stage
     Project     = local.project
     Role        = "Administrator"
-  }
-}
-
-module "deny_terraform_apply_policy" {
-  source = "../modules/iam_policies"
-
-  policy_name = "${local.project}-deny-terraform-apply-${var.stage}"
-  path        = "/${local.project}_policies/"
-  description = "Policy to deny resource creation and modification (prevents terraform apply)"
-  policy_document = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Deny"
-        NotAction = [
-          "iam:Get*",
-          "iam:List*",
-          "s3:Get*",
-          "s3:List*",
-          "ec2:Describe*",
-          "lambda:Get*",
-          "lambda:List*",
-          "logs:Describe*",
-          "logs:Get*",
-          "logs:List*",
-          "sts:GetCallerIdentity"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
-  tags = {
-    Environment = var.stage
-    Project     = local.project
   }
 }
 
@@ -208,5 +201,95 @@ module "ec2_secure_bucket_role" {
     Environment = var.stage
     Project     = local.project
     Purpose     = "EC2 Secure Bucket Read Access"
+  }
+}
+
+module "terraform_plan_read_policy" {
+  source = "../modules/iam_policies"
+
+  policy_name = "${local.project}-terraform-plan-read-${var.stage}"
+  path        = "/${local.project}_policies/"
+  description = "Read permissions for terraform plan operations"
+  policy_document = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "*:Get*",
+          "*:List*",
+          "*:Describe*"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+  tags = {
+    Environment = var.stage
+    Project     = local.project
+  }
+}
+
+module "terraform_state_backend_policy" {
+  source = "../modules/iam_policies"
+
+  policy_name = "${local.project}-terraform-state-backend-${var.stage}"
+  path        = "/${local.project}_policies/"
+  description = "Permissions for terraform state backend access"
+  policy_document = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:ListBucket",
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:DeleteItem"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+  tags = {
+    Environment = var.stage
+    Project     = local.project
+  }
+}
+
+module "terraform_plan_role" {
+  source = "../modules/iam_roles"
+
+  role_name   = "${local.project}-terraform-plan-${var.stage}"
+  path        = "/${local.project}-roles/"
+  description = "Shared role for engineers to run terraform plan"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${local.account_id}:root"
+        }
+        Action = "sts:AssumeRole"
+        Condition = {
+          StringEquals = {
+            "sts:ExternalId" = "${local.project}-engineers"
+          }
+        }
+      }
+    ]
+  })
+  policy_arns = [
+    module.terraform_plan_read_policy.policy_arn,
+    module.terraform_state_backend_policy.policy_arn,
+    module.deny_iam_privilege_escalation_policy.policy_arn
+  ]
+  tags = {
+    Environment = var.stage
+    Project     = local.project
+    Purpose     = "Terraform Plan Operations"
   }
 }

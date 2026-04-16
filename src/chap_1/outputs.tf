@@ -84,3 +84,13 @@ output "admin_access_key_secret" {
   value       = module.admin_user.access_key_secret
   sensitive   = true
 }
+
+output "terraform_plan_role_arn" {
+  description = "ARN of the Terraform Plan role that engineers can assume"
+  value       = module.terraform_plan_role.role_arn
+}
+
+output "terraform_plan_role_name" {
+  description = "Name of the Terraform Plan role"
+  value       = module.terraform_plan_role.role_name
+}
