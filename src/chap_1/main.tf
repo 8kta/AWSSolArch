@@ -93,7 +93,8 @@ module "developer_user" {
   path              = "/${local.project}-users/"
   create_access_key = true
   policy_arns = [
-    module.s3_read_policy.policy_arn
+    module.s3_read_policy.policy_arn,
+    module.deny_terraform_apply_policy.policy_arn
   ]
   tags = {
     Environment = var.stage
@@ -109,12 +110,43 @@ module "admin_user" {
   path              = "/${local.project}-users/"
   create_access_key = true
   policy_arns = [
-    "arn:aws:iam::aws:policy/AdministratorAccess"
+    "arn:aws:iam::aws:policy/AdministratorAccess",
+    module.deny_terraform_apply_policy.policy_arn
   ]
   tags = {
     Environment = var.stage
     Project     = local.project
     Role        = "Administrator"
+  }
+}
+
+module "deny_terraform_apply_policy" {
+  source = "../modules/iam_policies"
+
+  policy_name = "${local.project}-deny-terraform-apply-${var.stage}"
+  path        = "/${local.project}_policies/"
+  description = "Policy to deny resource creation and modification (prevents terraform apply)"
+  policy_document = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Deny"
+        Action = [
+          "*:Create*",
+          "*:Delete*",
+          "*:Update*",
+          "*:Put*",
+          "*:Modify*",
+          "*:Attach*",
+          "*:Detach*"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+  tags = {
+    Environment = var.stage
+    Project     = local.project
   }
 }
 
