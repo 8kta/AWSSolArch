@@ -89,8 +89,9 @@ module "administrators_group" {
 module "developer_user" {
   source = "../modules/iam_users"
 
-  user_name = "${local.project}-developer-${var.stage}"
-  path      = "/${local.project}-users/"
+  user_name         = "${local.project}-developer-${var.stage}"
+  path              = "/${local.project}-users/"
+  create_access_key = true
   policy_arns = [
     module.s3_read_policy.policy_arn
   ]
@@ -104,8 +105,9 @@ module "developer_user" {
 module "admin_user" {
   source = "../modules/iam_users"
 
-  user_name = "${local.project}-admin-${var.stage}"
-  path      = "/${local.project}-users/"
+  user_name         = "${local.project}-admin-${var.stage}"
+  path              = "/${local.project}-users/"
+  create_access_key = true
   policy_arns = [
     "arn:aws:iam::aws:policy/AdministratorAccess"
   ]

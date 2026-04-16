@@ -62,3 +62,25 @@ output "lambda_execution_policy_arn" {
   description = "ARN of the Lambda execution policy"
   value       = module.lambda_execution_policy.policy_arn
 }
+
+output "developer_access_key_id" {
+  description = "Access key ID for the developer user"
+  value       = module.developer_user.access_key_id
+}
+
+output "developer_access_key_secret" {
+  description = "Access key secret for the developer user (sensitive)"
+  value       = module.developer_user.access_key_secret
+  sensitive   = true
+}
+
+output "admin_access_key_id" {
+  description = "Access key ID for the admin user"
+  value       = module.admin_user.access_key_id
+}
+
+output "admin_access_key_secret" {
+  description = "Access key secret for the admin user (sensitive)"
+  value       = module.admin_user.access_key_secret
+  sensitive   = true
+}

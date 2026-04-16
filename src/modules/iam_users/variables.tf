@@ -20,3 +20,9 @@ variable "tags" {
   description = "Tags to apply to the IAM user"
   default     = {}
 }
+
+variable "create_access_key" {
+  type        = bool
+  description = "Whether to create an access key for the IAM user"
+  default     = false
+}
