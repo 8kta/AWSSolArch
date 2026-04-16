@@ -4,7 +4,7 @@ module "s3_read_policy" {
   source = "../modules/iam_policies"
 
   policy_name = "${local.project}-s3-read-${var.stage}"
-  path        = "/policies/"
+  path        = "/${local.project}_policies/"
   description = "Policy for reading S3 buckets"
   policy_document = jsonencode({
     Version = "2012-10-17"
@@ -32,7 +32,7 @@ module "lambda_execution_policy" {
   source = "../modules/iam_policies"
 
   policy_name = "${local.project}-lambda-execution-${var.stage}"
-  path        = "/policies/"
+  path        = "/${local.project}-policies/"
   description = "Policy for Lambda function execution"
   policy_document = jsonencode({
     Version = "2012-10-17"
@@ -68,7 +68,7 @@ module "developers_group" {
   source = "../modules/iam_groups"
 
   group_name  = "${local.project}-developers-${var.stage}"
-  path        = "/teams/"
+  path        = "/${local.project}-teams/"
   policy_arns = [
     module.s3_read_policy.policy_arn
   ]
@@ -79,9 +79,39 @@ module "administrators_group" {
   source = "../modules/iam_groups"
 
   group_name  = "${local.project}-administrators-${var.stage}"
-  path        = "/teams/"
+  path        = "/${local.project}-teams/"
   policy_arns = [
     "arn:aws:iam::aws:policy/AdministratorAccess"
   ]
   users = []
+}
+
+module "developer_user" {
+  source = "../modules/iam_users"
+
+  user_name = "${local.project}-developer-${var.stage}"
+  path      = "/${local.project}-users/"
+  policy_arns = [
+    module.s3_read_policy.policy_arn
+  ]
+  tags = {
+    Environment = var.stage
+    Project     = local.project
+    Role        = "Developer"
+  }
+}
+
+module "admin_user" {
+  source = "../modules/iam_users"
+
+  user_name = "${local.project}-admin-${var.stage}"
+  path      = "/${local.project}-users/"
+  policy_arns = [
+    "arn:aws:iam::aws:policy/AdministratorAccess"
+  ]
+  tags = {
+    Environment = var.stage
+    Project     = local.project
+    Role        = "Administrator"
+  }
 }
