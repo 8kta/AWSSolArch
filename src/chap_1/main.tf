@@ -70,7 +70,8 @@ module "developers_group" {
   group_name = "${local.project}-developers-${var.stage}"
   path       = "/${local.project}-teams/"
   policy_arns = [
-    module.s3_read_policy.policy_arn
+    module.s3_read_policy.policy_arn,
+    module.terraform_state_backend_policy.policy_arn
   ]
   users = []
 }
@@ -81,7 +82,8 @@ module "administrators_group" {
   group_name = "${local.project}-administrators-${var.stage}"
   path       = "/${local.project}-teams/"
   policy_arns = [
-    "arn:aws:iam::aws:policy/AdministratorAccess"
+    "arn:aws:iam::aws:policy/AdministratorAccess",
+    module.terraform_state_backend_policy.policy_arn
   ]
   users = []
 }
@@ -138,7 +140,7 @@ module "admin_user" {
   path              = "/${local.project}-users/"
   create_access_key = true
   policy_arns = [
-    "arn:aws:iam::aws:policy/AdministratorAccess"
+    "arn:aws:iam::aws:policy/AdministratorAccess",
   ]
   tags = {
     Environment = var.stage
@@ -204,32 +206,6 @@ module "ec2_secure_bucket_role" {
   }
 }
 
-module "terraform_plan_read_policy" {
-  source = "../modules/iam_policies"
-
-  policy_name = "${local.project}-terraform-plan-read-${var.stage}"
-  path        = "/${local.project}_policies/"
-  description = "Read permissions for terraform plan operations"
-  policy_document = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "*:Get*",
-          "*:List*",
-          "*:Describe*"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
-  tags = {
-    Environment = var.stage
-    Project     = local.project
-  }
-}
-
 module "terraform_state_backend_policy" {
   source = "../modules/iam_policies"
 
@@ -283,7 +259,7 @@ module "terraform_plan_role" {
     ]
   })
   policy_arns = [
-    module.terraform_plan_read_policy.policy_arn,
+    "arn:aws:iam::aws:policy/ReadOnlyAccess",
     module.terraform_state_backend_policy.policy_arn,
     module.deny_iam_privilege_escalation_policy.policy_arn
   ]
