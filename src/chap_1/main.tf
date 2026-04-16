@@ -131,14 +131,18 @@ module "deny_terraform_apply_policy" {
     Statement = [
       {
         Effect = "Deny"
-        Action = [
-          "*:Create*",
-          "*:Delete*",
-          "*:Update*",
-          "*:Put*",
-          "*:Modify*",
-          "*:Attach*",
-          "*:Detach*"
+        NotAction = [
+          "iam:Get*",
+          "iam:List*",
+          "s3:Get*",
+          "s3:List*",
+          "ec2:Describe*",
+          "lambda:Get*",
+          "lambda:List*",
+          "logs:Describe*",
+          "logs:Get*",
+          "logs:List*",
+          "sts:GetCallerIdentity"
         ]
         Resource = "*"
       }
