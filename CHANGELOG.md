@@ -21,4 +21,5 @@
             │    1: resource "aws_iam_policy" "this" {
             │ 
             ```
-            i removed all the wildcards from the policy document refering to services
+            i removed all the wildcards from the policy document refering to services.
+            I better created a role which can be attached to the services to only allow terraform plan. and add -terraform-state-backend- policy for groups
