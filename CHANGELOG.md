@@ -1,4 +1,4 @@
-# FBOMB: Feedback Optimized Model Base
+# Terraform IAM project for AWS solution architect certification
 
 ## 1.0.0
     Deployment TBD
